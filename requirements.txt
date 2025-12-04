@@ -1,0 +1,12 @@
+# Core Dependencies
+textual==0.47.1          # Terminal UI framework
+rich==13.7.0             # Rich text and formatting
+pydantic==2.5.3          # Data validation and models
+numpy==1.26.3            # Numerical operations for game calculations
+
+# Development Dependencies
+pytest==7.4.3            # Testing framework
+pytest-cov==4.1.0        # Test coverage
+black==23.12.1           # Code formatting
+mypy==1.8.0              # Type checking
+ruff==0.1.11             # Fast Python linter
