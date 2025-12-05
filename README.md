@@ -4,6 +4,17 @@ A text-based tactical JRPG combining Final Fantasy Tactics' job system, Brigandi
 
 ## Project Status
 
+**Phase 4: AI Nations & Monster System ✅ COMPLETE**
+- ✅ Monster spawning with nests and roaming parties
+- ✅ 8 monster types across 3 difficulty tiers
+- ✅ AI nation strategic decision-making
+- ✅ Autonomous territory conquest by AI
+- ✅ Diplomatic actions (war, peace, alliances)
+- ✅ Unit recruitment system (14+ unit classes)
+- ✅ Biome-specific and building-gated units
+- ✅ World event logging system
+- ✅ Full integration with combat system
+
 **Phase 3: Tactical Combat ✅ COMPLETE**
 - ✅ 12×18 hex battlefield system
 - ✅ A* pathfinding for movement
@@ -31,7 +42,7 @@ A text-based tactical JRPG combining Final Fantasy Tactics' job system, Brigandi
 - ✅ Basic UI framework
 - ✅ Turn-based time progression
 
-**Next: Phase 4 - AI Nations & Monster System**
+**Next: Phase 5 - Full Combat Integration & Army Management**
 
 ## Tech Stack
 
@@ -85,12 +96,39 @@ chronicles-of-aethermoor/
 - **Turn order**: Speed-based queue, fastest units act first
 - **Interactive battles**: Player controls units with move/attack commands
 
+### AI Nations & Living World
+- **Autonomous AI nations**: Watch empires expand and clash
+- **AI diplomacy**: Wars declared, peace treaties, alliances formed
+- **Strategic decisions**: AI evaluates expansion, military, economy
+- **5 AI personalities**: Aggressive, Expansionist, Diplomatic, Defensive, Balanced
+- **Territory conquest**: AI nations compete for land and resources
+
+### Monster System
+- **8 monster types**: Goblins, Wolves, Orcs, Dragons, Liches, and more
+- **Monster nests**: Spawn creatures, grow stronger over time
+- **Roaming parties**: Monsters move between territories
+- **Threat levels**: Minor to Critical danger ratings
+- **Loot rewards**: Gold and experience from victories
+- **Elemental creatures**: Fire Elementals, Death magic users
+
+### Unit Recruitment
+- **14+ unit classes**: Infantry, archers, mages, cavalry, specialists
+- **Building requirements**: Barracks, Mage Towers, Summoning Circles
+- **Biome-specific units**: Forest Rangers, Mountain Dwarves
+- **Resource costs**: Gold, food, iron, mana crystals
+- **Unit progression**: Experience and leveling system
+- **Tactical integration**: Recruited units join battles
+
 ### Gameplay
 - **Turn-based strategy**: Resources generate each turn on world map
 - **Tactical battles**: Fight on hex grids with positioning and terrain
+- **Recruit armies**: Build forces from controlled territories
+- **Defend borders**: Clear monster nests threatening your lands
+- **Diplomatic intrigue**: Monitor AI wars and alliances
 - **Territory inspection**: View detailed stats for any hex
 - **Nation overview**: Track population, happiness, military strength
 - **World exploration**: Interactive map with ASCII visualization
+- **World events log**: See what happened each turn
 - **Battle demo**: Test the combat system with procedural encounters
 - **Multiple difficulty levels**: Easy, Normal, Hard, Legendary
 

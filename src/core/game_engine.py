@@ -8,6 +8,9 @@ from datetime import datetime
 
 from src.models.game_state_simple import GameState
 from src.core.save_system import SaveSystem
+from src.systems.monster_spawner import MonsterSpawner
+from src.systems.ai_nation import AINationController
+from src.systems.recruitment import RecruitmentSystem
 
 
 class GameEngine:
@@ -19,6 +22,9 @@ class GameEngine:
     - Turn progression
     - Save/load coordination
     - System initialization
+    - AI nation coordination (Phase 4)
+    - Monster spawning (Phase 4)
+    - Unit recruitment (Phase 4)
     """
 
     def __init__(self, save_directory: Optional[Path] = None):
@@ -37,6 +43,12 @@ class GameEngine:
         self.state: Optional[GameState] = None
         self.is_running = False
         self.last_update_time: Optional[datetime] = None
+
+        # Phase 4 Systems
+        self.monster_spawner = MonsterSpawner()
+        self.ai_controller = AINationController()
+        self.recruitment_system = RecruitmentSystem()
+        self.world_events: list[dict] = []  # Track events this turn
 
     def new_game(
         self,
@@ -164,13 +176,20 @@ class GameEngine:
         print(f"Turn advanced to: {self.state.time}")
 
     def _process_turn(self) -> None:
-        """Process turn actions for all nations and territories."""
+        """
+        Process turn actions for all nations and territories.
+
+        Phase 4: Now includes AI actions and monster spawning.
+        """
         if self.state is None:
             return
 
         from src.models.territory import Territory
         from src.models.nation import Nation
         from src.data.constants import ResourceType, Element
+
+        # Clear events from previous turn
+        self.world_events.clear()
 
         # Load territories
         territories: dict[str, Territory] = {}
@@ -182,6 +201,14 @@ class GameEngine:
         for nation_id, nation_data in self.state.nations.items():
             nations[nation_id] = Nation.from_dict(nation_data)
 
+        # ========== PHASE 4: Monster Spawning ==========
+        monster_events = self.monster_spawner.process_turn(
+            self.state.time.current_turn,
+            territories
+        )
+        self.world_events.extend(monster_events)
+
+        # ========== Resource Generation ==========
         # Generate resources for each nation
         for nation in nations.values():
             turn_resources: dict[ResourceType, int] = {}
@@ -208,6 +235,18 @@ class GameEngine:
             # Update population statistics
             nation.update_population(self.state.territories)
 
+        # ========== PHASE 4: AI Nation Actions ==========
+        for nation in nations.values():
+            if nation.is_ai and nation.is_active:
+                ai_events = self.ai_controller.execute_ai_turn(
+                    nation,
+                    nations,
+                    territories,
+                    self.monster_spawner,
+                    self.state.time.current_turn,
+                )
+                self.world_events.extend(ai_events)
+
         # Save updated territories back
         self.state.territories = {
             territory_id: territory.to_dict()
@@ -219,6 +258,11 @@ class GameEngine:
             nation_id: nation.to_dict()
             for nation_id, nation in nations.items()
         }
+
+        # Store world events in game state
+        if not hasattr(self.state, 'world_events'):
+            self.state.world_events = []
+        self.state.world_events.extend(self.world_events)
 
     def get_current_state(self) -> Optional[GameState]:
         """Get current game state (read-only)."""
@@ -414,3 +458,93 @@ class GameEngine:
             "difficulty": self.state.player.difficulty.value,
             "win_rate": f"{self.state.player.win_rate * 100:.1f}%",
         }
+
+    # ========================================================================
+    # PHASE 4: New Methods
+    # ========================================================================
+
+    def get_world_events(self, last_n: int = 10) -> list[dict]:
+        """
+        Get recent world events.
+
+        Args:
+            last_n: Number of recent events to return
+
+        Returns:
+            List of event dictionaries
+        """
+        if self.state is None:
+            return []
+
+        return self.state.world_events[-last_n:]
+
+    def get_monster_threat_in_territory(self, territory_id: str) -> dict:
+        """Get monster threat assessment for a territory."""
+        return self.monster_spawner.get_threat_assessment(territory_id)
+
+    def recruit_unit(
+        self,
+        nation_id: str,
+        territory_id: str,
+        unit_class_id: str,
+        unit_name: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Recruit a unit for a nation at a territory.
+
+        Args:
+            nation_id: Nation recruiting
+            territory_id: Territory to recruit from
+            unit_class_id: Type of unit to recruit
+            unit_name: Optional custom name
+
+        Returns:
+            Unit ID if successful
+        """
+        if self.state is None:
+            return None
+
+        from src.models.nation import Nation
+        from src.models.territory import Territory
+
+        nation_data = self.state.nations.get(nation_id)
+        territory_data = self.state.territories.get(territory_id)
+
+        if not nation_data or not territory_data:
+            return None
+
+        nation = Nation.from_dict(nation_data)
+        territory = Territory.from_dict(territory_data)
+
+        # Recruit unit
+        unit_id = self.recruitment_system.recruit_unit(
+            nation,
+            territory,
+            unit_class_id,
+            unit_name,
+        )
+
+        if unit_id:
+            # Save updated nation
+            self.state.nations[nation_id] = nation.to_dict()
+
+        return unit_id
+
+    def get_available_units_for_territory(self, territory_id: str, nation_id: str) -> list:
+        """Get list of unit classes that can be recruited in a territory."""
+        if self.state is None:
+            return []
+
+        from src.models.nation import Nation
+        from src.models.territory import Territory
+
+        nation_data = self.state.nations.get(nation_id)
+        territory_data = self.state.territories.get(territory_id)
+
+        if not nation_data or not territory_data:
+            return []
+
+        nation = Nation.from_dict(nation_data)
+        territory = Territory.from_dict(territory_data)
+
+        return self.recruitment_system.get_available_units(territory, nation)
